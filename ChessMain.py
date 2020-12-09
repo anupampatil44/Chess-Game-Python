@@ -36,6 +36,7 @@ def loadImages():
 def main():
     p.init()
     screen = p.display.set_mode((WIDTH,HEIGHT))
+    p.display.set_caption("Chess Game") #Window name
     clock = p.time.Clock()
     screen.fill(p.Color("white"))
     gs=ChessEngine.Gamestate()

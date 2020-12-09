@@ -118,9 +118,20 @@ class Gamestate():
         i = 1
         while(r + i < 8):
             if(self.board[r+i][c]=='--'):
-                moves.append(Move((r,c),(r+i,c),self.board))
+                self.makeMove(Move((r, c), (r+i, c), self.board))
+                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r+i, c), self.board))
+                else:
+                    self.undoMove()
+
             elif (self.board[r+i][c][0] != self.board[r][c][0]):
-                moves.append(Move((r, c), (r+i, c), self.board))
+                self.makeMove(Move((r, c), (r + i, c), self.board))
+                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r+i, c), self.board))
+                else:
+                    self.undoMove()
                 break
             else:
                 break
@@ -130,9 +141,21 @@ class Gamestate():
         i = 1
         while (r - i >= 0):
             if (self.board[r-i][c] == '--'):
-                moves.append(Move((r, c), (r - i, c), self.board))
+                self.makeMove(Move((r, c), (r - i, c), self.board))
+                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r - i, c), self.board))
+                else:
+                    self.undoMove()
+
             elif(self.board[r-i][c][0]!=self.board[r][c][0]):
-                moves.append(Move((r, c), (r - i, c), self.board))
+                self.makeMove(Move((r, c), (r - i, c), self.board))
+                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r - i, c), self.board))
+                else:
+                    self.undoMove()
+
                 break
             else:
                 break
@@ -142,9 +165,20 @@ class Gamestate():
         i = 1
         while (c - i >= 0):
             if (self.board[r][c-i] == '--'):
-                moves.append(Move((r, c), (r, c-i), self.board))
+                self.makeMove(Move((r, c), (r , c-i), self.board))
+                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r, c - i), self.board))
+                else:
+                    self.undoMove()
+
             elif (self.board[r][c-i][0] != self.board[r][c][0]):
-                moves.append(Move((r, c), (r, c-i), self.board))
+                self.makeMove(Move((r, c), (r, c - i), self.board))
+                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r, c - i), self.board))
+                else:
+                    self.undoMove()
                 break
             else:
                 break
@@ -154,9 +188,20 @@ class Gamestate():
         i = 1
         while (c + i < 8):
             if (self.board[r][c+i] == '--'):
-                moves.append(Move((r, c), (r, c+i), self.board))
+                self.makeMove(Move((r, c), (r, c + i), self.board))
+                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r, c + i), self.board))
+                else:
+                    self.undoMove()
+
             elif (self.board[r][c+i][0] != self.board[r][c][0]):
-                moves.append(Move((r, c), (r, c+i), self.board))
+                self.makeMove(Move((r, c), (r, c + i), self.board))
+                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r, c + i), self.board))
+                else:
+                    self.undoMove()
                 break
             else:
                 break
@@ -167,42 +212,89 @@ class Gamestate():
         # forward_left
         if(r+2<8 and c-1>=0):
             if(self.board[r+2][c-1]=="--" or self.board[r+2][c-1][0]!=self.board[r][c][0]):
-                moves.append(Move((r,c),(r+2,c-1),self.board))
+                self.makeMove(Move((r, c), (r+2, c-1), self.board))
+                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r + 2, c - 1), self.board))
+                else:
+                    self.undoMove()
+
 
         # forward_right
         if(r+2<8 and c+1<8):
             if(self.board[r+2][c+1]=="--" or self.board[r+2][c+1][0]!=self.board[r][c][0]):
-                moves.append(Move((r,c),(r+2,c+1),self.board))
+                self.makeMove(Move((r, c), (r + 2, c + 1), self.board))
+                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r + 2, c + 1), self.board))
+                else:
+                    self.undoMove()
+
 
         # backward_left
         if(r-2>=0 and c-1>=0):
             if(self.board[r-2][c-1]=="--" or self.board[r-2][c-1][0]!=self.board[r][c][0]):
-                moves.append(Move((r,c),(r-2,c-1),self.board))
+                self.makeMove(Move((r, c), (r - 2, c - 1), self.board))
+                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
+                    self.undoMove()
+                    moves.append(Move((r,c),(r-2,c-1),self.board))
+                else:
+                    self.undoMove()
+
 
         # backward right
         if(r-2>=0 and c+1<8):
             if(self.board[r-2][c+1]=="--" or self.board[r-2][c+1][0]!=self.board[r][c][0]):
-                moves.append(Move((r,c),(r-2,c+1),self.board))
+                self.makeMove(Move((r, c), (r - 2, c + 1), self.board))
+                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r - 2, c + 1), self.board))
+                else:
+                    self.undoMove()
 
         # leftward forward
         if (r + 1 < 8 and c - 2 >= 0):
             if (self.board[r + 1][c - 2] == "--" or self.board[r+1][c-2][0]!=self.board[r][c][0]):
-                moves.append(Move((r, c), (r + 1, c - 2), self.board))
+                self.makeMove(Move((r, c), (r + 1, c - 2), self.board))
+                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r + 1, c - 2), self.board))
+                else:
+                    self.undoMove()
+
 
         # rightward forward
         if (r + 1 < 8 and c + 2 < 8):
             if (self.board[r + 1][c + 2] == "--" or self.board[r+1][c+2][0]!=self.board[r][c][0]):
-                moves.append(Move((r, c), (r + 1, c + 2), self.board))
+                self.makeMove(Move((r, c), (r + 1, c + 2), self.board))
+                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r + 1, c + 2), self.board))
+                else:
+                    self.undoMove()
+
 
         # leftward backward
         if (r - 1 >=0 and c - 2 >= 0):
             if (self.board[r - 1][c - 2] == "--" or self.board[r-1][c-2][0]!=self.board[r][c][0]):
-                moves.append(Move((r, c), (r - 1, c - 2), self.board))
+                self.makeMove(Move((r, c), (r - 1, c - 2), self.board))
+                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r - 1, c - 2), self.board))
+                else:
+                    self.undoMove()
+
 
         # rightward backward
         if (r - 1 >=0 and c + 2 < 8):
             if (self.board[r - 1][c + 2] == "--" or self.board[r-1][c+1][0]!=self.board[r][c][0]):
-                moves.append(Move((r, c), (r - 1, c + 2), self.board))
+                self.makeMove(Move((r, c), (r - 1, c + 2), self.board))
+                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r - 1, c + 2), self.board))
+                else:
+                    self.undoMove()
+
 
     # get all the bishop moves for the pawn located at row, column and add these moves to the list
     def getBishopMoves(self, r, c, moves):
@@ -211,9 +303,22 @@ class Gamestate():
         i = 1
         while (r + i < 8 and c - i >= 0):
             if (self.board[r + i][c - i] == '--'):
-                moves.append(Move((r, c), (r + i, c - i), self.board))
+                self.makeMove(Move((r, c), (r + i, c - i), self.board))
+                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],
+                                       self.getKingPosition(self.whiteToMove)[1])) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r + i, c - i), self.board))
+                else:
+                    self.undoMove()
+
             elif (self.board[r + i][c - i][0] != self.board[r][c][0]):
-                moves.append(Move((r, c), (r + i, c - i), self.board))
+                self.makeMove(Move((r, c), (r + i, c - i), self.board))
+                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r + i, c - i), self.board))
+                else:
+                    self.undoMove()
+
                 break
             else:
                 break
@@ -223,9 +328,21 @@ class Gamestate():
         i = 1
         while (r + i < 8 and c + i <8):
             if (self.board[r + i][c + i] == '--'):
-                moves.append(Move((r, c), (r + i, c + i), self.board))
+                self.makeMove(Move((r, c), (r + i, c + i), self.board))
+                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r + i, c + i), self.board))
+                else:
+                    self.undoMove()
+
             elif (self.board[r + i][c + i][0] != self.board[r][c][0]):
-                moves.append(Move((r, c), (r + i, c + i), self.board))
+                self.makeMove(Move((r, c), (r + i, c + i), self.board))
+                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r + i, c + i), self.board))
+                else:
+                    self.undoMove()
+
                 break
             else:
                 break
@@ -235,9 +352,23 @@ class Gamestate():
         i = 1
         while (r-i>=0 and c - i >= 0):
             if (self.board[r-i][c - i] == '--'):
-                moves.append(Move((r, c), (r-i, c - i), self.board))
+                self.makeMove(Move((r, c), (r - i, c - i), self.board))
+                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],
+                                       self.getKingPosition(self.whiteToMove)[1])) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r-i, c - i), self.board))
+                else:
+                    self.undoMove()
+
             elif (self.board[r-i][c - i][0] != self.board[r][c][0]):
-                moves.append(Move((r, c), (r-i, c - i), self.board))
+                self.makeMove(Move((r, c), (r - i, c - i), self.board))
+                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],
+                                       self.getKingPosition(self.whiteToMove)[1])) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r - i, c - i), self.board))
+                else:
+                    self.undoMove()
+
                 break
             else:
                 break
@@ -247,9 +378,22 @@ class Gamestate():
         i = 1
         while (r - i >=0 and c + i < 8):
             if (self.board[r - i][c + i] == '--'):
-                moves.append(Move((r, c), (r - i, c + i), self.board))
+                self.makeMove(Move((r, c), (r - i, c + i), self.board))
+                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],
+                                       self.getKingPosition(self.whiteToMove)[1])) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r - i, c + i), self.board))
+                else:
+                    self.undoMove()
+
             elif (self.board[r - i][c + i][0] != self.board[r][c][0]):
-                moves.append(Move((r, c), (r - i, c + i), self.board))
+                self.makeMove(Move((r, c), (r - i, c + i), self.board))
+                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],
+                                       self.getKingPosition(self.whiteToMove)[1])) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r - i, c + i), self.board))
+                else:
+                    self.undoMove()
                 break
             else:
                 break
@@ -266,50 +410,88 @@ class Gamestate():
         # forward
         if (r+1<8):
             if(self.board[r + 1][c] == "--" or self.board[r + 1][c][0] != self.board[r][c][0]):
+                self.makeMove(Move((r, c), (r+1, c), self.board))
                 if(len(self.getChecks(r+1,c))==0):
+                    self.undoMove()
                     moves.append(Move((r, c), (r + 1, c), self.board))
+                else:
+                    self.undoMove()
+
 
         # forward_right
         if (r+1<8  and  c+1<8):
             if(self.board[r + 1][c+1] == "--" or self.board[r + 1][c+1][0] != self.board[r][c][0]):
+                self.makeMove(Move((r, c), (r + 1, c+1), self.board))
                 if (len(self.getChecks(r + 1, c+1)) == 0):
+                    self.undoMove()
                     moves.append(Move((r, c), (r + 1, c+1), self.board))
+                else:
+                    self.undoMove()
+
 
         # forward_left
         if (r+1<8 and c-1>=0):
             if(self.board[r + 1][c-1] == "--" or self.board[r + 1][c-1][0] != self.board[r][c][0]):
-                if (len(self.getChecks(r + 1, c-1)) == 0):
-                    moves.append(Move((r, c), (r + 1, c-1), self.board))
+                self.makeMove(Move((r, c), (r + 1, c - 1), self.board))
+                if (len(self.getChecks(r + 1, c - 1)) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r + 1, c - 1), self.board))
+                else:
+                    self.undoMove()
 
         # backward
         if (r-1>=0):
             if(self.board[r - 1][c] == "--" or self.board[r - 1][c][0] != self.board[r][c][0]):
+                self.makeMove(Move((r, c), (r - 1, c), self.board))
                 if (len(self.getChecks(r - 1, c)) == 0):
+                    self.undoMove()
                     moves.append(Move((r, c), (r - 1, c), self.board))
+                else:
+                    self.undoMove()
 
         # backward_right
         if (r-1>=0 and c+1<8):
             if(self.board[r - 1][c+1] == "--" or self.board[r - 1][c+1][0] != self.board[r][c][0]):
+                self.makeMove(Move((r, c), (r - 1, c+1), self.board))
                 if (len(self.getChecks(r - 1, c+1)) == 0):
+                    self.undoMove()
                     moves.append(Move((r, c), (r - 1, c+1), self.board))
+                else:
+                    self.undoMove()
+
 
         # backward_left
         if (r-1>=0 and c-1>=0):
             if(self.board[r - 1][c-1] == "--" or self.board[r - 1][c-1][0] != self.board[r][c][0]):
-                if (len(self.getChecks(r - 1, c-1)) == 0):
-                    moves.append(Move((r, c), (r - 1, c-1), self.board))
+                self.makeMove(Move((r, c), (r - 1, c - 1), self.board))
+                if (len(self.getChecks(r - 1, c - 1)) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r - 1, c - 1), self.board))
+                else:
+                    self.undoMove()
+
 
         # right
         if (c+1<8):
             if(self.board[r][c+1] == "--" or self.board[r][c+1][0] != self.board[r][c][0]):
-                if (len(self.getChecks(r, c+1)) == 0):
-                    moves.append(Move((r, c), (r, c+1), self.board))
+                self.makeMove(Move((r, c), (r, c + 1), self.board))
+                if (len(self.getChecks(r, c + 1)) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r, c + 1), self.board))
+                else:
+                    self.undoMove()
+
 
         # left
         if (c-1>=0):
             if(self.board[r][c-1] == "--" or self.board[r][c-1][0] != self.board[r][c][0]):
-                if (len(self.getChecks(r, c-1)) == 0):
-                    moves.append(Move((r, c), (r, c-1), self.board))
+                self.makeMove(Move((r, c), (r, c - 1), self.board))
+                if (len(self.getChecks(r, c - 1)) == 0):
+                    self.undoMove()
+                    moves.append(Move((r, c), (r, c - 1), self.board))
+                else:
+                    self.undoMove()
+
 
     def getChecks(self, r, c):
         kMove=[]

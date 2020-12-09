@@ -6,9 +6,10 @@ import numpy as np
 
 # To be able to access the game state
 import ChessEngine
-
+from ChessEngine import gWhiteToMove
 # Size of the  chess board
-WIDTH = HEIGHT  = 512
+WIDTH = 512
+HEIGHT  = 512
 
 # Dimensions of the chess board ( 8 x 8 )
 DIMENSION = 8
@@ -36,7 +37,8 @@ def loadImages():
 def main():
     p.init()
     screen = p.display.set_mode((WIDTH,HEIGHT))
-    p.display.set_caption("Chess Game") #Window name
+    pawns=p.Surface((512,512))
+    p.display.set_caption("Chess Game (White's turn) ")
     clock = p.time.Clock()
     screen.fill(p.Color("white"))
     gs=ChessEngine.Gamestate()
@@ -48,6 +50,7 @@ def main():
     sqSelected=() # no square is selected, keep track of the last click of the user (tuple: (row, col))
     playerClicks=[] # keep track of the player clicks (two tuples [(6,4), (4,4)] to show the change in position of pieces
     while running:
+
         for e in p.event.get():
             if e.type == p.QUIT:
                 running=False
@@ -80,12 +83,19 @@ def main():
                     moveMade = True
 
         if(moveMade):
+            global gWhiteToMove
+            if (not gWhiteToMove):
+                p.display.set_caption("Chess Game (White's turn) ")  # Window name
+            else:
+                p.display.set_caption("Chess Game (Black's turn) ")
+            gWhiteToMove=not gWhiteToMove
             validMoves = gs.getValidMoves()
             moveMade = False
 
         piece, x, y = getSquareUnderMouse(gs.board)  # So that the square in which the mouse is get's highlighted
-        drawGameState(screen, gs)
-        drawSelector(screen, piece, x, y)
+        drawGameState(pawns, gs)
+        drawSelector(pawns, piece, x, y)
+        screen.blit(pawns, (0, 0))
         clock.tick(MAX_FPS)
         p.display.flip()
 
@@ -118,6 +128,7 @@ def drawPieces(screen, board):
 def getSquareUnderMouse(board):
     mouse_pos=p.Vector2(p.mouse.get_pos())
     x, y = [int(v // SQ_SIZE) for v in mouse_pos]
+
     try:
         if x>=0 and y>=0:
             return (board[x][y], x, y)

@@ -2,8 +2,10 @@
 # Also be responsible for determining the valid moevs at the current state
 # It will also keep a move log
 
-import numpy as np;
+import numpy as np
+import pymsgbox
 
+gWhiteToMove=True
 class Gamestate():
     def __init__(self):
         # Board is an 8x8 array and each element has 2 characters -  the color of the piece and the second character represents the type of the piece
@@ -78,6 +80,7 @@ class Gamestate():
         self.board[move.endRow][move.endCol] = move.pieceMoved
         self.moveLog.append(move)   # log the move so that we can undo it later
         self.whiteToMove = not self.whiteToMove  # swap players
+        gWhiteToMove=self.whiteToMove
 
 
     def undoMove(self):
@@ -86,6 +89,7 @@ class Gamestate():
             self.board[move.startRow][move.startCol] = move.pieceMoved
             self.board[move.endRow][move.endCol] = move.pieceCaptured
             self.whiteToMove  = not self.whiteToMove    # switch turns back
+            gWhiteToMove = self.whiteToMove
 
     # All moves considering checks
     def getValidMoves(self):
@@ -96,9 +100,11 @@ class Gamestate():
         n=len(moves)
         if (self.whiteToMove):
             if (len(self.getChecks(self.wKrow, self.wKcol, self.board)) > 0):
-                print("Check to white")
+                pymsgbox.alert('Check to white!!', 'Alert!')
+                print("Check to white!")
         else:
             if (len(self.getChecks(self.bKrow, self.bKcol, self.board)) > 0):
+                pymsgbox.alert('Check to black!!', 'Alert!')
                 print("Check to black")
         while(i<n):
             if(not self.checkValidity(moves[i])):
@@ -108,9 +114,11 @@ class Gamestate():
                 i+=1
         if(len(moves)==0):
             if(self.whiteToMove):
+                pymsgbox.alert('Checkmate! Black is victorious!!', 'Game Over!')
                 print("Checkmate! Black is victorious")
             else:
-                print("Checkmate! White is victorius")
+                pymsgbox.alert('Checkmate! White is victorious!!', 'Game Over!')
+                print("Checkmate! White is victorious")
         return moves
 
 

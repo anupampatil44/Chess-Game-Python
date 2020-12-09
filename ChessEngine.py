@@ -81,21 +81,21 @@ class Gamestate():
         if(self.whiteToMove):   # white pawn moves
             if(self.board[r-1][c]=="--"): # 1 square pawn advance
                 self.makeMove(Move((r, c), (r - 1, c), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove))) == 0):
+                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0], self.getKingPosition(self.whiteToMove)[1])) == 0):
                     self.undoMove()
                     moves.append(Move((r, c), (r - 1, c), self.board))
                 else:
                     self.undoMove()
                 if(self.board[r-2][c]=="--" and r==6):
                     self.makeMove(Move((r, c), (r - 2, c), self.board))
-                    if(len(self.getChecks(self.getKingPosition(self.whiteToMove)))==0):
+                    if(len(self.getChecks(self.getKingPosition(self.whiteToMove)[0], self.getKingPosition(self.whiteToMove)[1]))==0):
                         self.undoMove()
                         moves.append(Move((r, c), (r - 2, c), self.board))
                     else:
                         self.undoMove()
             if(self.board[r-1][c-1]!="--"):
                 self.makeMove(Move((r, c), (r - 1, c - 1), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove))) == 0):
+                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0], self.getKingPosition(self.whiteToMove)[1])) == 0):
                     self.undoMove()
                     moves.append(Move((r, c), (r - 1, c - 1), self.board))
                 else:

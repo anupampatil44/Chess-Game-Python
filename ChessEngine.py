@@ -21,15 +21,64 @@ class Gamestate():
                                ["wR","wN","wB","wQ","wK","wB","wN","wR"]]).reshape(8,8)
         self.whiteToMove = True
         self.moveLog = []
+        self.wKrow = 7
+        self.wKcol = 4
+        self.bKrow = 0
+        self.bKcol = 4
+
+    def checkValidity(self, move):
+        wKrow=self.wKrow
+        wKcol=self.wKcol
+        bKrow=self.bKrow
+        bKcol=self.bKcol
+        temp_board=np.array([["bR","bN","bB","bQ","bK","bB","bN","bR"],
+                               ["bp","bp","bp","bp","bp","bp","bp","bp"],
+                               ["--","--","--","--","--","--","--","--"],
+                               ["--","--","--","--","--","--","--","--"],
+                               ["--","--","--","--","--","--","--","--"],
+                               ["--","--","--","--","--","--","--","--"],
+                               ["wp","wp","wp","wp","wp","wp","wp","wp"],
+                               ["wR","wN","wB","wQ","wK","wB","wN","wR"]]).reshape(8,8)
+        for r in range(len(temp_board)):
+            for c in range(len(temp_board[0])):
+                temp_board[r][c]=self.board[r][c]
+
+        if (temp_board[move.startRow][move.startCol] == "wK"):
+            wKrow = move.endRow
+            wKcol = move.endCol
+        elif (temp_board[move.startRow][move.startCol] == "bK"):
+            bKrow = move.endRow
+            bKcol = move.endCol
+
+        temp_board[move.startRow][move.startCol]="--"
+        temp_board[move.endRow][move.endCol]=move.pieceMoved
+        if(self.whiteToMove):
+            if(len(self.getChecks(wKrow, wKcol, temp_board))>0):
+                return False
+            else:
+                return True
+        else:
+            if(len(self.getChecks(bKrow, bKcol, temp_board))>0):
+                return False
+            else:
+                return True
+
 
     # takes a move as a parameter and executes it. Does not work for castling, pawn promotion and en-passant
     def makeMove(self, move):
         if(self.board[move.startRow][move.startCol]=="--"):
             return
+        if(self.board[move.startRow][move.startCol]=="wK"):
+            self.wKrow=move.endRow
+            self.wKcol=move.endCol
+        elif(self.board[move.startRow][move.startCol]=="bK"):
+            self.bKrow=move.endRow
+            self.bKcol=move.endCol
         self.board[move.startRow][move.startCol]="--"
         self.board[move.endRow][move.endCol] = move.pieceMoved
         self.moveLog.append(move)   # log the move so that we can undo it later
         self.whiteToMove = not self.whiteToMove  # swap players
+
 
     def undoMove(self):
         if len(self.moveLog) != 0:  # make sure that there is a move to undo
@@ -38,21 +87,32 @@ class Gamestate():
             self.board[move.endRow][move.endCol] = move.pieceCaptured
             self.whiteToMove  = not self.whiteToMove    # switch turns back
 
-    def getKingPosition(self, whiteToMove):
-        if(whiteToMove):
-            for r in range(len(self.board)):
-                for c in range(len(self.board[0])):
-                    if(self.board[r][c]=="wK"):
-                        return (r,c)
-        else:
-            for r in range(len(self.board)):
-                for c in range(len(self.board[0])):
-                    if(self.board[r][c]=="bK"):
-                        return (r,c)
-
     # All moves considering checks
     def getValidMoves(self):
-        return self.getAllPossibleMoves()
+        moves = self.getAllPossibleMoves()
+        if(len(moves)==0):
+            return moves
+        i=0
+        n=len(moves)
+        if (self.whiteToMove):
+            if (len(self.getChecks(self.wKrow, self.wKcol, self.board)) > 0):
+                print("Check to white")
+        else:
+            if (len(self.getChecks(self.bKrow, self.bKcol, self.board)) > 0):
+                print("Check to black")
+        while(i<n):
+            if(not self.checkValidity(moves[i])):
+                moves.pop(i)
+                n-=1
+            else:
+                i+=1
+        if(len(moves)==0):
+            if(self.whiteToMove):
+                print("Checkmate! Black is victorious")
+            else:
+                print("Checkmate! White is victorius")
+        return moves
+
 
     # All moves without considering checks
     def getAllPossibleMoves(self):
@@ -78,326 +138,250 @@ class Gamestate():
 
     # get all the pawn moves for the pawn located at row, column and add these moves to the list
     def getPawnMoves(self, r, c, moves):
-        if(self.whiteToMove):   # white pawn moves
-            if(self.board[r-1][c]=="--"): # 1 square pawn advance
-                self.makeMove(Move((r, c), (r - 1, c), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0], self.getKingPosition(self.whiteToMove)[1])) == 0):
-                    self.undoMove()
-                    moves.append(Move((r, c), (r - 1, c), self.board))
-                else:
-                    self.undoMove()
-                if(self.board[r-2][c]=="--" and r==6):
-                    self.makeMove(Move((r, c), (r - 2, c), self.board))
-                    if(len(self.getChecks(self.getKingPosition(self.whiteToMove)[0], self.getKingPosition(self.whiteToMove)[1]))==0):
-                        self.undoMove()
-                        moves.append(Move((r, c), (r - 2, c), self.board))
-                    else:
-                        self.undoMove()
-            if(self.board[r-1][c-1]!="--"):
-                self.makeMove(Move((r, c), (r - 1, c - 1), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0], self.getKingPosition(self.whiteToMove)[1])) == 0):
-                    self.undoMove()
-                    moves.append(Move((r, c), (r - 1, c - 1), self.board))
-                else:
-                    self.undoMove()
-            if (c<7 and self.board[r-1][c+1] != "--"):
-                moves.append(Move((r, c), (r - 1, c + 1), self.board))
-        else:                   # black pawn moves
-            if (self.board[r + 1][c] == "--"):  # 1 square pawn advance
-                moves.append(Move((r, c), (r + 1, c), self.board))
-                if (self.board[r + 2][c] == "--" and r == 1):
-                    moves.append(Move((r, c), (r + 2, c), self.board))
-            if (self.board[r + 1][c - 1] != "--"):
-                moves.append(Move((r, c), (r + 1, c - 1), self.board))
-            if (c < 7 and self.board[r + 1][c + 1] != "--"):
-                moves.append(Move((r, c), (r + 1, c + 1), self.board))
 
-    # get all the rook moves for the pawn located at row, column and add these moves to the list
+            if(self.whiteToMove):                                                           # white pawn moves
+
+                if(r - 1>=0):
+                    if(self.board[r - 1][c]=="--"):                                         # 1 square pawn advance
+                        moves.append(Move((r, c), (r - 1, c), self.board))
+                        if(r - 2 >= 0):
+                            if(self.board[r-2][c]=="--" and r==6):                          # 2 square pawn advance
+                                moves.append(Move((r, c), (r - 2, c), self.board))
+
+                if(r-1>=0 and c-1>=0):                                                      # backward-left capture
+                    if(self.board[r-1][c-1]!="--"):
+                        moves.append(Move((r, c), (r - 1, c - 1), self.board))
+
+                if(r-1>=0 and c+1<8):                                                       # backward-right capture
+                    if (self.board[r-1][c+1] != "--"):
+                        moves.append(Move((r, c), (r - 1, c + 1), self.board))
+
+            else:                                                                           # black pawn moves
+
+                if(r+1<8):
+                    if (self.board[r + 1][c] == "--"):                                      # 1 square pawn advance
+                        moves.append(Move((r, c), (r + 1, c), self.board))
+                        if(r+2<8):
+                            if (self.board[r + 2][c] == "--" and r == 1):                   # 2 square pawn advance
+                                moves.append(Move((r, c), (r + 2, c), self.board))
+
+                if(r+1<8 and c-1>=0):                                                       # forward-left capture
+                    if (self.board[r + 1][c - 1] != "--"):
+                        moves.append(Move((r, c), (r + 1, c - 1), self.board))
+
+                if(r+1<8 and c+1<8):
+                    if (c < 7 and self.board[r + 1][c + 1] != "--"):                        # forward-right capture
+                        moves.append(Move((r, c), (r + 1, c + 1), self.board))
+
+
+    # get all the rook moves for the rook located at row, column and add these moves to the list
     def getRookMoves(self, r, c, moves):
-        # forward
-        i = 1
-        while(r + i < 8):
-            if(self.board[r+i][c]=='--'):
-                self.makeMove(Move((r, c), (r+i, c), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
-                    self.undoMove()
+
+
+            # forward
+
+            i = 1
+
+            while(r + i < 8):
+
+                if(self.board[r+i][c]=='--'):                                               # No piece in front
                     moves.append(Move((r, c), (r+i, c), self.board))
-                else:
-                    self.undoMove()
 
-            elif (self.board[r+i][c][0] != self.board[r][c][0]):
-                self.makeMove(Move((r, c), (r + i, c), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
-                    self.undoMove()
+                elif (self.board[r+i][c][0] != self.board[r][c][0]):                        # opponent piece in front
                     moves.append(Move((r, c), (r+i, c), self.board))
-                else:
-                    self.undoMove()
-                break
-            else:
-                break
-            i+=1
+                    break
 
-        # backward
-        i = 1
-        while (r - i >= 0):
-            if (self.board[r-i][c] == '--'):
-                self.makeMove(Move((r, c), (r - i, c), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
-                    self.undoMove()
+                else:                                                                       # self piece in front
+                    break
+
+                i+=1
+
+
+            # backward
+
+            i = 1
+
+            while (r - i >= 0):
+
+                if (self.board[r-i][c] == '--'):
                     moves.append(Move((r, c), (r - i, c), self.board))
-                else:
-                    self.undoMove()
 
-            elif(self.board[r-i][c][0]!=self.board[r][c][0]):
-                self.makeMove(Move((r, c), (r - i, c), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
-                    self.undoMove()
+                elif(self.board[r-i][c][0]!=self.board[r][c][0]):
                     moves.append(Move((r, c), (r - i, c), self.board))
+                    break
+
                 else:
-                    self.undoMove()
+                    break
 
-                break
-            else:
-                break
-            i += 1
+                i += 1
 
-        # left
-        i = 1
-        while (c - i >= 0):
-            if (self.board[r][c-i] == '--'):
-                self.makeMove(Move((r, c), (r , c-i), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
-                    self.undoMove()
+
+            # left
+
+            i = 1
+
+            while (c - i >= 0):
+
+                if (self.board[r][c-i] == '--'):
                     moves.append(Move((r, c), (r, c - i), self.board))
-                else:
-                    self.undoMove()
 
-            elif (self.board[r][c-i][0] != self.board[r][c][0]):
-                self.makeMove(Move((r, c), (r, c - i), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
-                    self.undoMove()
+                elif (self.board[r][c-i][0] != self.board[r][c][0]):
                     moves.append(Move((r, c), (r, c - i), self.board))
-                else:
-                    self.undoMove()
-                break
-            else:
-                break
-            i += 1
+                    break
 
-        # right
-        i = 1
-        while (c + i < 8):
-            if (self.board[r][c+i] == '--'):
-                self.makeMove(Move((r, c), (r, c + i), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
-                    self.undoMove()
-                    moves.append(Move((r, c), (r, c + i), self.board))
                 else:
-                    self.undoMove()
+                    break
 
-            elif (self.board[r][c+i][0] != self.board[r][c][0]):
-                self.makeMove(Move((r, c), (r, c + i), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
-                    self.undoMove()
+                i += 1
+
+
+            # right
+
+            i = 1
+
+            while (c + i < 8):
+
+                if (self.board[r][c+i] == '--'):
                     moves.append(Move((r, c), (r, c + i), self.board))
+
+                elif (self.board[r][c+i][0] != self.board[r][c][0]):
+                    moves.append(Move((r, c), (r, c + i), self.board))
+                    break
+
                 else:
-                    self.undoMove()
-                break
-            else:
-                break
-            i += 1
+                    break
+
+                i += 1
+
 
     # get all the knight moves for the pawn located at row, column and add these moves to the list
     def getKnightMoves(self, r, c, moves):
-        # forward_left
-        if(r+2<8 and c-1>=0):
-            if(self.board[r+2][c-1]=="--" or self.board[r+2][c-1][0]!=self.board[r][c][0]):
-                self.makeMove(Move((r, c), (r+2, c-1), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
-                    self.undoMove()
+
+
+            # forward_left
+            if(r+2<8 and c-1>=0):
+
+                if(self.board[r+2][c-1]=="--" or self.board[r+2][c-1][0]!=self.board[r][c][0]):
                     moves.append(Move((r, c), (r + 2, c - 1), self.board))
-                else:
-                    self.undoMove()
 
 
-        # forward_right
-        if(r+2<8 and c+1<8):
-            if(self.board[r+2][c+1]=="--" or self.board[r+2][c+1][0]!=self.board[r][c][0]):
-                self.makeMove(Move((r, c), (r + 2, c + 1), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
-                    self.undoMove()
+            # forward_right
+            if(r+2<8 and c+1<8):
+
+                if(self.board[r+2][c+1]=="--" or self.board[r+2][c+1][0]!=self.board[r][c][0]):
                     moves.append(Move((r, c), (r + 2, c + 1), self.board))
-                else:
-                    self.undoMove()
 
 
-        # backward_left
-        if(r-2>=0 and c-1>=0):
-            if(self.board[r-2][c-1]=="--" or self.board[r-2][c-1][0]!=self.board[r][c][0]):
-                self.makeMove(Move((r, c), (r - 2, c - 1), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
-                    self.undoMove()
+            # backward_left
+            if(r-2>=0 and c-1>=0):
+
+                if(self.board[r-2][c-1]=="--" or self.board[r-2][c-1][0]!=self.board[r][c][0]):
                     moves.append(Move((r,c),(r-2,c-1),self.board))
-                else:
-                    self.undoMove()
 
 
-        # backward right
-        if(r-2>=0 and c+1<8):
-            if(self.board[r-2][c+1]=="--" or self.board[r-2][c+1][0]!=self.board[r][c][0]):
-                self.makeMove(Move((r, c), (r - 2, c + 1), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
-                    self.undoMove()
+            # backward right
+            if(r-2>=0 and c+1<8):
+
+                if(self.board[r-2][c+1]=="--" or self.board[r-2][c+1][0]!=self.board[r][c][0]):
                     moves.append(Move((r, c), (r - 2, c + 1), self.board))
-                else:
-                    self.undoMove()
 
-        # leftward forward
-        if (r + 1 < 8 and c - 2 >= 0):
-            if (self.board[r + 1][c - 2] == "--" or self.board[r+1][c-2][0]!=self.board[r][c][0]):
-                self.makeMove(Move((r, c), (r + 1, c - 2), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
-                    self.undoMove()
+
+            # leftward forward
+            if (r + 1 < 8 and c - 2 >= 0):
+
+                if (self.board[r + 1][c - 2] == "--" or self.board[r+1][c-2][0]!=self.board[r][c][0]):
                     moves.append(Move((r, c), (r + 1, c - 2), self.board))
-                else:
-                    self.undoMove()
 
 
-        # rightward forward
-        if (r + 1 < 8 and c + 2 < 8):
-            if (self.board[r + 1][c + 2] == "--" or self.board[r+1][c+2][0]!=self.board[r][c][0]):
-                self.makeMove(Move((r, c), (r + 1, c + 2), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
-                    self.undoMove()
+            # rightward forward
+            if (r + 1 < 8 and c + 2 < 8):
+
+                if (self.board[r + 1][c + 2] == "--" or self.board[r+1][c+2][0]!=self.board[r][c][0]):
                     moves.append(Move((r, c), (r + 1, c + 2), self.board))
-                else:
-                    self.undoMove()
 
 
-        # leftward backward
-        if (r - 1 >=0 and c - 2 >= 0):
-            if (self.board[r - 1][c - 2] == "--" or self.board[r-1][c-2][0]!=self.board[r][c][0]):
-                self.makeMove(Move((r, c), (r - 1, c - 2), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
-                    self.undoMove()
+            # leftward backward
+            if (r - 1 >=0 and c - 2 >= 0):
+
+                if (self.board[r - 1][c - 2] == "--" or self.board[r-1][c-2][0]!=self.board[r][c][0]):
                     moves.append(Move((r, c), (r - 1, c - 2), self.board))
-                else:
-                    self.undoMove()
 
 
-        # rightward backward
-        if (r - 1 >=0 and c + 2 < 8):
-            if (self.board[r - 1][c + 2] == "--" or self.board[r-1][c+1][0]!=self.board[r][c][0]):
-                self.makeMove(Move((r, c), (r - 1, c + 2), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
-                    self.undoMove()
+            # rightward backward
+            if (r - 1 >=0 and c + 2 < 8):
+
+                if (self.board[r - 1][c + 2] == "--" or self.board[r-1][c+1][0]!=self.board[r][c][0]):
                     moves.append(Move((r, c), (r - 1, c + 2), self.board))
-                else:
-                    self.undoMove()
 
 
     # get all the bishop moves for the pawn located at row, column and add these moves to the list
     def getBishopMoves(self, r, c, moves):
 
-        # forward_left
-        i = 1
-        while (r + i < 8 and c - i >= 0):
-            if (self.board[r + i][c - i] == '--'):
-                self.makeMove(Move((r, c), (r + i, c - i), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],
-                                       self.getKingPosition(self.whiteToMove)[1])) == 0):
-                    self.undoMove()
+            # forward_left
+            i = 1
+            while (r + i < 8 and c - i >= 0):
+
+                if (self.board[r + i][c - i] == '--'):
                     moves.append(Move((r, c), (r + i, c - i), self.board))
-                else:
-                    self.undoMove()
 
-            elif (self.board[r + i][c - i][0] != self.board[r][c][0]):
-                self.makeMove(Move((r, c), (r + i, c - i), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
-                    self.undoMove()
+                elif (self.board[r + i][c - i][0] != self.board[r][c][0]):
                     moves.append(Move((r, c), (r + i, c - i), self.board))
+                    break
+
                 else:
-                    self.undoMove()
+                    break
 
-                break
-            else:
-                break
-            i += 1
+                i += 1
 
-        # forward_right
-        i = 1
-        while (r + i < 8 and c + i <8):
-            if (self.board[r + i][c + i] == '--'):
-                self.makeMove(Move((r, c), (r + i, c + i), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
-                    self.undoMove()
+            # forward_right
+            i = 1
+            while (r + i < 8 and c + i <8):
+
+                if (self.board[r + i][c + i] == '--'):
                     moves.append(Move((r, c), (r + i, c + i), self.board))
-                else:
-                    self.undoMove()
 
-            elif (self.board[r + i][c + i][0] != self.board[r][c][0]):
-                self.makeMove(Move((r, c), (r + i, c + i), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],self.getKingPosition(self.whiteToMove)[1])) == 0):
-                    self.undoMove()
+                elif (self.board[r + i][c + i][0] != self.board[r][c][0]):
                     moves.append(Move((r, c), (r + i, c + i), self.board))
+                    break
+
                 else:
-                    self.undoMove()
+                    break
 
-                break
-            else:
-                break
-            i += 1
+                i += 1
 
-        # backward_left
-        i = 1
-        while (r-i>=0 and c - i >= 0):
-            if (self.board[r-i][c - i] == '--'):
-                self.makeMove(Move((r, c), (r - i, c - i), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],
-                                       self.getKingPosition(self.whiteToMove)[1])) == 0):
-                    self.undoMove()
+            # backward_left
+            i = 1
+            while (r-i>=0 and c - i >= 0):
+
+                if (self.board[r-i][c - i] == '--'):
                     moves.append(Move((r, c), (r-i, c - i), self.board))
-                else:
-                    self.undoMove()
 
-            elif (self.board[r-i][c - i][0] != self.board[r][c][0]):
-                self.makeMove(Move((r, c), (r - i, c - i), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],
-                                       self.getKingPosition(self.whiteToMove)[1])) == 0):
-                    self.undoMove()
+
+                elif (self.board[r-i][c - i][0] != self.board[r][c][0]):
                     moves.append(Move((r, c), (r - i, c - i), self.board))
+                    break
+
                 else:
-                    self.undoMove()
+                    break
 
-                break
-            else:
-                break
-            i += 1
+                i += 1
 
-        # backward_right
-        i = 1
-        while (r - i >=0 and c + i < 8):
-            if (self.board[r - i][c + i] == '--'):
-                self.makeMove(Move((r, c), (r - i, c + i), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],
-                                       self.getKingPosition(self.whiteToMove)[1])) == 0):
-                    self.undoMove()
+            # backward_right
+            i = 1
+            while (r - i >=0 and c + i < 8):
+                if (self.board[r - i][c + i] == '--'):
+                        moves.append(Move((r, c), (r - i, c + i), self.board))
+
+
+                elif (self.board[r - i][c + i][0] != self.board[r][c][0]):
                     moves.append(Move((r, c), (r - i, c + i), self.board))
-                else:
-                    self.undoMove()
+                    break
 
-            elif (self.board[r - i][c + i][0] != self.board[r][c][0]):
-                self.makeMove(Move((r, c), (r - i, c + i), self.board))
-                if (len(self.getChecks(self.getKingPosition(self.whiteToMove)[0],
-                                       self.getKingPosition(self.whiteToMove)[1])) == 0):
-                    self.undoMove()
-                    moves.append(Move((r, c), (r - i, c + i), self.board))
                 else:
-                    self.undoMove()
-                break
-            else:
-                break
-            i += 1
+                    break
+
+                i += 1
+
 
     # get all the queen moves for the queen located at row, column and add these moves to the list
     def getQueenMoves(self, r, c, moves):
@@ -407,101 +391,70 @@ class Gamestate():
     # get all the king moves for the king located at row, column and add these moves to the list
     def getKingMoves(self, r, c, moves):
 
-        # forward
-        if (r+1<8):
-            if(self.board[r + 1][c] == "--" or self.board[r + 1][c][0] != self.board[r][c][0]):
-                self.makeMove(Move((r, c), (r+1, c), self.board))
-                if(len(self.getChecks(r+1,c))==0):
-                    self.undoMove()
+            # forward
+            if (r+1<8):
+
+                if(self.board[r + 1][c] == "--" or self.board[r + 1][c][0] != self.board[r][c][0]):
                     moves.append(Move((r, c), (r + 1, c), self.board))
-                else:
-                    self.undoMove()
 
 
-        # forward_right
-        if (r+1<8  and  c+1<8):
-            if(self.board[r + 1][c+1] == "--" or self.board[r + 1][c+1][0] != self.board[r][c][0]):
-                self.makeMove(Move((r, c), (r + 1, c+1), self.board))
-                if (len(self.getChecks(r + 1, c+1)) == 0):
-                    self.undoMove()
-                    moves.append(Move((r, c), (r + 1, c+1), self.board))
-                else:
-                    self.undoMove()
+            # forward_right
+            if (r+1<8  and  c+1<8):
+
+                if(self.board[r + 1][c+1] == "--" or self.board[r + 1][c+1][0] != self.board[r][c][0]):
+                        moves.append(Move((r, c), (r + 1, c+1), self.board))
 
 
-        # forward_left
-        if (r+1<8 and c-1>=0):
-            if(self.board[r + 1][c-1] == "--" or self.board[r + 1][c-1][0] != self.board[r][c][0]):
-                self.makeMove(Move((r, c), (r + 1, c - 1), self.board))
-                if (len(self.getChecks(r + 1, c - 1)) == 0):
-                    self.undoMove()
-                    moves.append(Move((r, c), (r + 1, c - 1), self.board))
-                else:
-                    self.undoMove()
+            # forward_left
+            if (r+1<8 and c-1>=0):
 
-        # backward
-        if (r-1>=0):
-            if(self.board[r - 1][c] == "--" or self.board[r - 1][c][0] != self.board[r][c][0]):
-                self.makeMove(Move((r, c), (r - 1, c), self.board))
-                if (len(self.getChecks(r - 1, c)) == 0):
-                    self.undoMove()
+                if(self.board[r + 1][c-1] == "--" or self.board[r + 1][c-1][0] != self.board[r][c][0]):
+                        moves.append(Move((r, c), (r + 1, c - 1), self.board))
+
+
+            # backward
+            if (r-1>=0):
+
+                if(self.board[r - 1][c] == "--" or self.board[r - 1][c][0] != self.board[r][c][0]):
                     moves.append(Move((r, c), (r - 1, c), self.board))
-                else:
-                    self.undoMove()
 
-        # backward_right
-        if (r-1>=0 and c+1<8):
-            if(self.board[r - 1][c+1] == "--" or self.board[r - 1][c+1][0] != self.board[r][c][0]):
-                self.makeMove(Move((r, c), (r - 1, c+1), self.board))
-                if (len(self.getChecks(r - 1, c+1)) == 0):
-                    self.undoMove()
+
+            # backward_right
+            if (r-1>=0 and c+1<8):
+
+                if(self.board[r - 1][c+1] == "--" or self.board[r - 1][c+1][0] != self.board[r][c][0]):
                     moves.append(Move((r, c), (r - 1, c+1), self.board))
-                else:
-                    self.undoMove()
 
 
-        # backward_left
-        if (r-1>=0 and c-1>=0):
-            if(self.board[r - 1][c-1] == "--" or self.board[r - 1][c-1][0] != self.board[r][c][0]):
-                self.makeMove(Move((r, c), (r - 1, c - 1), self.board))
-                if (len(self.getChecks(r - 1, c - 1)) == 0):
-                    self.undoMove()
+            # backward_left
+            if (r-1>=0 and c-1>=0):
+
+                if(self.board[r - 1][c-1] == "--" or self.board[r - 1][c-1][0] != self.board[r][c][0]):
                     moves.append(Move((r, c), (r - 1, c - 1), self.board))
-                else:
-                    self.undoMove()
 
 
-        # right
-        if (c+1<8):
-            if(self.board[r][c+1] == "--" or self.board[r][c+1][0] != self.board[r][c][0]):
-                self.makeMove(Move((r, c), (r, c + 1), self.board))
-                if (len(self.getChecks(r, c + 1)) == 0):
-                    self.undoMove()
+            # right
+            if (c+1<8):
+
+                if(self.board[r][c+1] == "--" or self.board[r][c+1][0] != self.board[r][c][0]):
                     moves.append(Move((r, c), (r, c + 1), self.board))
-                else:
-                    self.undoMove()
 
 
-        # left
-        if (c-1>=0):
-            if(self.board[r][c-1] == "--" or self.board[r][c-1][0] != self.board[r][c][0]):
-                self.makeMove(Move((r, c), (r, c - 1), self.board))
-                if (len(self.getChecks(r, c - 1)) == 0):
-                    self.undoMove()
-                    moves.append(Move((r, c), (r, c - 1), self.board))
-                else:
-                    self.undoMove()
+            # left
+            if (c-1>=0):
+                if(self.board[r][c-1] == "--" or self.board[r][c-1][0] != self.board[r][c][0]):
+                        moves.append(Move((r, c), (r, c - 1), self.board))
 
 
-    def getChecks(self, r, c):
+    def getChecks(self, r, c, board):
         kMove=[]
 
         # backward_left
         i=1
         while(r-i>=0 and c-i>=0):
-            if((self.board[r-i][c-i][1]=="B" or self.board[r-i][c-i][1]=="Q") and self.board[r][c][0]!=self.board[r-i][c-i][0]):
-                kMove.append(Move((r,c),(r-i,c-i),self.board))
-            elif(self.board[r-i][c-i]=="--"):
+            if((board[r-i][c-i][1]=="B" or board[r-i][c-i][1]=="Q") and board[r][c][0]!=board[r-i][c-i][0]):
+                kMove.append(Move((r,c),(r-i,c-i),board))
+            elif(board[r-i][c-i]=="--"):
                 pass
             else:
                 break
@@ -510,9 +463,9 @@ class Gamestate():
         # backward_right
         i = 1
         while (r - i >= 0 and c + i < 8):
-            if ((self.board[r - i][c + i][1] == "B" or self.board[r - i][c + i][1] == "Q") and self.board[r][c][0] != self.board[r - i][c + i][0]):
-                kMove.append(Move((r, c), (r - i, c + i), self.board))
-            elif (self.board[r - i][c + i] == "--"):
+            if ((board[r - i][c + i][1] == "B" or board[r - i][c + i][1] == "Q") and board[r][c][0] != board[r - i][c + i][0]):
+                kMove.append(Move((r, c), (r - i, c + i), board))
+            elif (board[r - i][c + i] == "--"):
                 pass
             else:
                 break
@@ -521,9 +474,9 @@ class Gamestate():
         # forward_left
         i = 1
         while (r + i < 8 and c - i >=0):
-            if ((self.board[r + i][c - i][1] == "B" or self.board[r + i][c - i][1] == "Q") and self.board[r][c][0] != self.board[r + i][c - i][0]):
-                kMove.append(Move((r, c), (r + i, c - i), self.board))
-            elif (self.board[r + i][c - i] == "--"):
+            if ((board[r + i][c - i][1] == "B" or board[r + i][c - i][1] == "Q") and board[r][c][0] != board[r + i][c - i][0]):
+                kMove.append(Move((r, c), (r + i, c - i), board))
+            elif (board[r + i][c - i] == "--"):
                 pass
             else:
                 break
@@ -532,9 +485,9 @@ class Gamestate():
         # forward_right
         i = 1
         while (r + i < 8 and c + i < 8):
-            if ((self.board[r + i][c + i][1] == "B" or self.board[r + i][c + i][1] == "Q") and self.board[r][c][0] != self.board[r + i][c + i][0]):
-                kMove.append(Move((r, c), (r + i, c + i), self.board))
-            elif (self.board[r + i][c + i] == "--"):
+            if ((board[r + i][c + i][1] == "B" or board[r + i][c + i][1] == "Q") and board[r][c][0] != board[r + i][c + i][0]):
+                kMove.append(Move((r, c), (r + i, c + i), board))
+            elif (board[r + i][c + i] == "--"):
                 pass
             else:
                 break
@@ -543,9 +496,9 @@ class Gamestate():
         # forward
         i = 1
         while (r + i < 8):
-            if ((self.board[r + i][c][1] == "R" or self.board[r + i][c][1] == "Q") and self.board[r][c][0] != self.board[r + i][c][0]):
-                kMove.append(Move((r, c), (r + i, c), self.board))
-            elif (self.board[r + i][c] == "--"):
+            if ((board[r + i][c][1] == "R" or board[r + i][c][1] == "Q") and board[r][c][0] != board[r + i][c][0]):
+                kMove.append(Move((r, c), (r + i, c), board))
+            elif (board[r + i][c] == "--"):
                 pass
             else:
                 break
@@ -554,9 +507,9 @@ class Gamestate():
         # backward
         i = 1
         while (r - i >= 0):
-            if ((self.board[r - i][c][1] == "R" or self.board[r - i][c][1] == "Q") and self.board[r][c][0] != self.board[r - i][c][0]):
-                kMove.append(Move((r, c), (r - i, c), self.board))
-            elif (self.board[r - i][c] == "--"):
+            if ((board[r - i][c][1] == "R" or board[r - i][c][1] == "Q") and board[r][c][0] != board[r - i][c][0]):
+                kMove.append(Move((r, c), (r - i, c), board))
+            elif (board[r - i][c] == "--"):
                 pass
             else:
                 break
@@ -565,9 +518,9 @@ class Gamestate():
         # left
         i = 1
         while (c - i >= 0):
-            if ((self.board[r][c-i][1] == "R" or self.board[r][c-i][1] == "Q") and self.board[r][c][0] != self.board[r][c-i][0]):
-                kMove.append(Move((r, c), (r, c-i), self.board))
-            elif (self.board[r][c - i] == "--"):
+            if ((board[r][c-i][1] == "R" or board[r][c-i][1] == "Q") and board[r][c][0] != board[r][c-i][0]):
+                kMove.append(Move((r, c), (r, c-i), board))
+            elif (board[r][c - i] == "--"):
                 pass
             else:
                 break
@@ -576,9 +529,9 @@ class Gamestate():
         # right
         i = 1
         while (c + i < 8):
-            if ((self.board[r][c+i][1] == "R" or self.board[r][c+i][1] == "Q") and self.board[r][c][0] != self.board[r][c+i][0]):
-                kMove.append(Move((r, c), (r, c+i), self.board))
-            elif (self.board[r][c + i] == "--"):
+            if ((board[r][c+i][1] == "R" or board[r][c+i][1] == "Q") and board[r][c][0] != board[r][c+i][0]):
+                kMove.append(Move((r, c), (r, c+i), board))
+            elif (board[r][c + i] == "--"):
                 pass
             else:
                 break
@@ -586,63 +539,63 @@ class Gamestate():
 
         # forward_left k
         if(r+2<8 and c-1>=0):
-            if(self.board[r+2][c-1][1]=="N" and self.board[r][c][0]!=self.board[r+2][c-1][0]):
-                kMove.append(Move((r, c), (r+2, c-1), self.board))
+            if(board[r+2][c-1][1]=="N" and board[r][c][0]!=board[r+2][c-1][0]):
+                kMove.append(Move((r, c), (r+2, c-1), board))
 
         # leftward_forward k
         if (r + 1 < 8 and c - 2 >= 0):
-            if (self.board[r + 1][c - 2][1] == "N" and self.board[r][c][0] != self.board[r + 1][c - 2][0]):
-                kMove.append(Move((r, c), (r + 1, c - 2), self.board))
+            if (board[r + 1][c - 2][1] == "N" and board[r][c][0] != board[r + 1][c - 2][0]):
+                kMove.append(Move((r, c), (r + 1, c - 2), board))
 
         # forward_right k
         if (r + 2 < 8 and c + 1 < 8):
-            if (self.board[r + 2][c + 1][1] == "N" and self.board[r][c][0] != self.board[r + 2][c + 1][0]):
-                kMove.append(Move((r, c), (r + 2, c + 1), self.board))
+            if (board[r + 2][c + 1][1] == "N" and board[r][c][0] != board[r + 2][c + 1][0]):
+                kMove.append(Move((r, c), (r + 2, c + 1), board))
 
         # rightward_forward
         if (r + 1 < 8 and c + 2 < 8):
-            if (self.board[r + 1][c + 2][1] == "N" and self.board[r][c][0] != self.board[r + 1][c + 2][0]):
-                kMove.append(Move((r, c), (r + 1, c + 2), self.board))
+            if (board[r + 1][c + 2][1] == "N" and board[r][c][0] != board[r + 1][c + 2][0]):
+                kMove.append(Move((r, c), (r + 1, c + 2), board))
 
         # backward_left k
         if (r - 2 >= 0 and c - 1 >= 0):
-            if (self.board[r - 2][c - 1][1] == "N" and self.board[r][c][0] != self.board[r - 2][c - 1][0]):
-                kMove.append(Move((r, c), (r - 2, c - 1), self.board))
+            if (board[r - 2][c - 1][1] == "N" and board[r][c][0] != board[r - 2][c - 1][0]):
+                kMove.append(Move((r, c), (r - 2, c - 1), board))
 
         # leftward_backward
         if (r - 1 >=0 and c - 2 >= 0):
-            if (self.board[r - 1][c - 2][1] == "N" and self.board[r][c][0] != self.board[r - 1][c - 2][0]):
-                kMove.append(Move((r, c), (r - 1, c - 2), self.board))
+            if (board[r - 1][c - 2][1] == "N" and board[r][c][0] != board[r - 1][c - 2][0]):
+                kMove.append(Move((r, c), (r - 1, c - 2), board))
 
         # backward_right k
         if (r - 2 >=0 and c + 1 < 8):
-            if (self.board[r - 2][c + 1][1] == "N" and self.board[r][c][0] != self.board[r - 2][c + 1][0]):
-                kMove.append(Move((r, c), (r - 2, c + 1), self.board))
+            if (board[r - 2][c + 1][1] == "N" and board[r][c][0] != board[r - 2][c + 1][0]):
+                kMove.append(Move((r, c), (r - 2, c + 1), board))
 
         # rightward_backward
         if (r - 1 >=0 and c + 2 < 8):
-            if (self.board[r - 1][c + 2][1] == "N" and self.board[r][c][0] != self.board[r - 1][c + 2][0]):
-                kMove.append(Move((r, c), (r - 1, c + 2), self.board))
+            if (board[r - 1][c + 2][1] == "N" and board[r][c][0] != board[r - 1][c + 2][0]):
+                kMove.append(Move((r, c), (r - 1, c + 2), board))
 
         # forward_left p
         if(r+1<8 and c-1>=0):
-            if (self.board[r + 1][c - 1][1] == "p" and self.board[r][c][0] != self.board[r + 1][c - 1][0]):
-                kMove.append(Move((r, c), (r + 1, c - 1), self.board))
+            if (board[r + 1][c - 1][1] == "p" and board[r][c][0] != board[r + 1][c - 1][0]):
+                kMove.append(Move((r, c), (r + 1, c - 1), board))
 
         # forward_right p
         if (r + 1 < 8 and c + 1 < 8):
-            if (self.board[r + 1][c + 1][1] == "p" and self.board[r][c][0] != self.board[r + 1][c + 1][0]):
-                kMove.append(Move((r, c), (r + 1, c + 1), self.board))
+            if (board[r + 1][c + 1][1] == "p" and board[r][c][0] != board[r + 1][c + 1][0]):
+                kMove.append(Move((r, c), (r + 1, c + 1), board))
 
         # backward_left p
         if (r - 1 >= 0 and c - 1 >= 0):
-            if (self.board[r - 1][c - 1][1] == "p" and self.board[r][c][0] != self.board[r - 1][c - 1][0]):
-                kMove.append(Move((r, c), (r - 1, c - 1), self.board))
+            if (board[r - 1][c - 1][1] == "p" and board[r][c][0] != board[r - 1][c - 1][0]):
+                kMove.append(Move((r, c), (r - 1, c - 1), board))
 
         # backward_right
         if (r - 1 >= 0 and c + 1 < 8):
-            if (self.board[r - 1][c + 1][1] == "p" and self.board[r][c][0] != self.board[r - 1][c + 1][0]):
-                kMove.append(Move((r, c), (r - 1, c + 1), self.board))
+            if (board[r - 1][c + 1][1] == "p" and board[r][c][0] != board[r - 1][c + 1][0]):
+                kMove.append(Move((r, c), (r - 1, c + 1), board))
 
         return kMove
 
